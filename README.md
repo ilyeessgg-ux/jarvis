@@ -1,6 +1,6 @@
 # J.A.R.V.I.S.
 
-A local, voice-first JARVIS-style assistant for Windows: an always-on **“Hey Jarvis”** wake word, on-device speech recognition, a British synthesized voice, streaming OpenRouter reasoning with real tool use, persistent memory, and a holographic HUD.
+A local, voice-first JARVIS-style assistant for Windows: an always-on **“Hey Jarvis”** wake word, on-device speech recognition, a British synthesized voice, streaming LLM reasoning with real tool use, persistent memory, and a holographic HUD.
 
 ![J.A.R.V.I.S. HUD](docs/hud.png)
 
@@ -57,7 +57,7 @@ The install folder is never written to, so the app can live in `Program Files` o
 | Wake word | **openWakeWord** `hey_jarvis_v0.1`, fully on-device, adjustable sensitivity |
 | Speech-to-text | **faster-whisper** `base.en`, local CPU (int8) |
 | Voice | **edge-tts** British voices, default `en-GB-RyanNeural`; cached; Windows SAPI fallback |
-| Brain | **OpenRouter** streaming chat completions + OpenAI-compatible tool calling |
+| Brain | **OpenAI-compatible** streaming chat completions + tool calling (OpenRouter or AgentRouter) |
 | Conversation | Multi-turn context, persistent SQLite history, facts, notes |
 | PC control | Open apps / URLs / folders, volume, media keys, screenshots, clipboard, window control, lock, power actions |
 | Information | Live weather + forecast, web search, news headlines |
@@ -80,7 +80,7 @@ cd jarvis
 .\setup.ps1
 ```
 
-`setup.ps1` downloads an isolated 64-bit Python 3.12 runtime into `runtime/`, installs dependencies, fetches the wake-word and Whisper models, and creates `.env`. Add your OpenRouter key to `.env`, then:
+`setup.ps1` downloads an isolated 64-bit Python 3.12 runtime into `runtime/`, installs dependencies, fetches the wake-word and Whisper models, and creates `.env`. Add your OpenRouter or AgentRouter key to `.env`, then:
 
 ```powershell
 # Background + tray (same behaviour as the packaged app)
@@ -130,7 +130,7 @@ The HUD is served at **http://127.0.0.1:7777**. Say **“Hey Jarvis”**, wait f
 │                    Assistant orchestrator (assistant.py)                   │
 │  conversation queue · state machine · system prompt · tool loop · speech   │
 ├───────────────┬───────────────┬───────────────┬───────────────┬────────────┤
-│ OpenRouter    │ Toolbox       │ Memory        │ Audio engine  │ Reminders  │
+│ LLM gateway   │ Toolbox       │ Memory        │ Audio engine  │ Reminders  │
 │ streaming +   │ 25 Windows /  │ SQLite: chat, │ openWakeWord  │ scheduler  │
 │ tool calling  │ web tools     │ facts, notes  │ + VAD recorder│ + TTS      │
 └───────────────┴───────────────┴───────────────┴───────────────┴────────────┘
@@ -239,12 +239,12 @@ git push origin v1.0.0
 
 ## Security and privacy
 
-- The OpenRouter key is read from `.env`, is never embedded in the HUD, and `.env` is git-ignored.
+- Your LLM API key is read from `.env`, is never embedded in the HUD, and `.env` is git-ignored.
 - The HUD and API bind to **127.0.0.1** by default. Do not expose the port to the internet — the local API has no authentication.
 - Conversation history, facts, notes, and reminders live in the local SQLite database. Use **EXPORT MEMORY** in Settings to download a JSON copy.
-- Wake word detection and speech-to-text are **local**. Weather/search/news calls go directly to their public APIs. OpenRouter receives your prompts. edge-tts sends the text it speaks to Microsoft’s speech service; if that is unavailable, the Windows SAPI fallback is used.
+- Wake word detection and speech-to-text are **local**. Weather/search/news calls go directly to their public APIs. Your configured LLM provider (OpenRouter or AgentRouter) receives your prompts. edge-tts sends the text it speaks to Microsoft’s speech service; if that is unavailable, the Windows SAPI fallback is used.
 - Shutdown, restart, and sleep tools require explicit confirmation. Power actions schedule a 45-second delay so they can be cancelled.
-- If an API key is ever exposed, revoke it at <https://openrouter.ai/settings/keys> and put a new key in `.env`.
+- If an API key is ever exposed, revoke it with your provider (OpenRouter: <https://openrouter.ai/settings/keys>, AgentRouter: <https://agentrouter.org>) and put a new key in `.env`.
 
 ---
 
@@ -256,10 +256,11 @@ git push origin v1.0.0
 | Window did not appear after launch | It is in the tray by default. Say “Hey Jarvis”, press `Ctrl+Alt+J`, or choose **Open J.A.R.V.I.S.** from the tray menu. |
 | “NO KEY” in the top bar | Add `OPENROUTER_API_KEY=...` to `.env` (tray → **Edit settings**) and restart. |
 | HTTP 402 “requires more credits” | The account has no paid credit. Keep the free model, or add credit and choose a paid model in Settings. |
+| AgentRouter returns 401 / 404 / 503 | 401 means the key is wrong or missing. 404 usually means `OPENROUTER_BASE_URL` is not `https://agentrouter.org/v1`. 503 means the selected model is offline or unavailable; try `deepseek-v4-flash` or `glm-5.3`. |
 | Microphone OFFLINE | Check Windows **Settings → Privacy → Microphone**, and that a default input device exists. Text commands still work. |
 | Wake word misses | Lower `wake_threshold` to `0.45` in Settings, speak a little closer, and check the mic meter. Raise it to `0.65` if it wakes on its own. |
 | No voice | edge-tts needs internet. The SAPI fallback uses the installed Windows voice. Check the log. |
-| First answer is slow | Whisper and the OpenRouter model are warming up. Subsequent turns are faster. |
+| First answer is slow | Whisper and the LLM model are warming up. Subsequent turns are faster. |
 | Native window is blank | Install the Microsoft Edge WebView2 Runtime, or use `.\run.ps1` (browser). |
 | Port 7777 already in use | Use `--port 7788`, or stop the other process. |
 | Reset everything | Quit JARVIS and delete `%LOCALAPPDATA%\JARVIS\jarvis.db` (export first if needed). |
@@ -280,7 +281,7 @@ jarvis/
 │  ├─ config.py            paths, environment defaults, persona, voices
 │  ├─ desktop.py           native window, wake-to-show, tray wiring
 │  ├─ events.py            thread-safe SSE event bus
-│  ├─ llm.py               OpenRouter streaming + tool-call assembly
+│  ├─ llm.py               OpenAI-compatible streaming + tool-call assembly
 │  ├─ memory.py            SQLite: messages, facts, notes, reminders, settings
 │  ├─ scheduler.py         spoken reminders
 │  ├─ server.py            Flask REST + SSE API
