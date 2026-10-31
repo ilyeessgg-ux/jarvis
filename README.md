@@ -14,7 +14,7 @@ A local, voice-first JARVIS-style assistant for Windows: an always-on **“Hey J
 
 1. Download and extract the zip anywhere you like.
 2. Run **`JARVIS.exe`**.
-3. On first launch, open the tray icon → **Edit settings (.env)** and add your [OpenRouter API key](https://openrouter.ai/settings/keys), then restart JARVIS.
+3. On first launch, open the tray icon → **Edit settings (.env)** and add your [OpenRouter API key](https://openrouter.ai/settings/keys) or [AgentRouter API key](https://agentrouter.org), then restart JARVIS. AgentRouter users also need `OPENROUTER_BASE_URL=https://agentrouter.org/v1` and `OPENROUTER_MODEL=deepseek-v4-flash`; see [Using AgentRouter](#using-agentrouter).
 
 The app starts **in the background** with a tray icon. Say **“Hey Jarvis”** and the HUD opens, chimes, and starts listening. Closing the window hides it back to the tray; use the tray menu to reopen it or quit.
 
@@ -151,8 +151,9 @@ Settings can be changed live in the HUD’s **SETTINGS** panel. They are stored 
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `OPENROUTER_API_KEY` | — | **Required.** Stored only in `.env` |
-| `OPENROUTER_MODEL` | `nvidia/nemotron-3.5-super-vl:free` | Tool-capable OpenRouter model |
+| `OPENROUTER_API_KEY` | — | **Required.** API key for your provider. Stored only in `.env` |
+| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | OpenAI-compatible endpoint. Set to `https://agentrouter.org/v1` for AgentRouter |
+| `OPENROUTER_MODEL` | `nvidia/nemotron-3.5-super-vl:free` | Tool-capable model ID for the selected provider |
 | `JARVIS_USER_NAME` | `sir` | How Jarvis addresses you |
 | `JARVIS_CITY` | `London` | Default weather location |
 | `JARVIS_VOICE` | `en-GB-RyanNeural` | edge-tts voice |
@@ -162,6 +163,36 @@ Settings can be changed live in the HUD’s **SETTINGS** panel. They are stored 
 | `JARVIS_HOST` / `JARVIS_PORT` | `127.0.0.1` / `7777` | HUD bind address |
 
 **Model notes:** the default is a free tool-capable model. Free models can be rate-limited by their upstream providers. If you add credit, switch to a stronger paid model such as `openai/gpt-4o-mini` in Settings. Models must support tool calling.
+
+### Using AgentRouter
+
+J.A.R.V.I.S. talks to any OpenAI-compatible chat-completions endpoint, so an
+[AgentRouter](https://agentrouter.org) key works without code changes. The
+`OPENROUTER_*` variable names are kept for backwards compatibility; the base
+URL decides which provider is used.
+
+1. Quit JARVIS fully from the tray.
+2. Edit the `.env` next to `JARVIS.exe` (tray → **Edit settings (.env)**) and
+   replace the OpenRouter lines with:
+
+   ```dotenv
+   OPENROUTER_API_KEY=<your AgentRouter API key>
+   OPENROUTER_BASE_URL=https://agentrouter.org/v1
+   OPENROUTER_MODEL=deepseek-v4-flash
+   ```
+
+3. If you have already run JARVIS before, open **SETTINGS → NEURAL MODEL** and
+   enter `deepseek-v4-flash`, then **SAVE CONFIGURATION**. The model is stored in
+   the local database; `.env` only seeds it on a fresh install.
+4. Restart JARVIS. The HUD should show **READY** instead of **NO KEY**.
+
+AgentRouter's OpenAI-compatible base URL is `https://agentrouter.org/v1`.
+`deepseek-v4-flash` is the model used in AgentRouter's own OpenCode guide and is
+a good low-cost default. Other current tool-capable choices include `glm-5.3`
+and `gpt-5.6-sol`; model availability changes, so check your AgentRouter console.
+If a model errors with `503 no available channel`, choose another model from the
+console. The model field in the HUD is free text, so any tool-capable model ID
+can be used.
 
 Wake-word and Whisper models are bundled into the release, so the packaged app works offline for listening and transcription. The first spoken line is slower while the voice cache warms up.
 
