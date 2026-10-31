@@ -61,7 +61,8 @@ foreach ($Doc in @("README.md", "LICENSE", "SECURITY.md", "CHANGELOG.md")) {
 
 if (Test-Path $Zip) { Remove-Item $Zip -Force }
 Write-Host "  Compressing..." -ForegroundColor Yellow
-Compress-Archive -Path (Join-Path $Dist "*") -DestinationPath $Zip -CompressionLevel Optimal
+& $Python (Join-Path $Root "scripts\make_archive.py") $Dist $Zip
+if ($LASTEXITCODE -ne 0) { throw "Archive creation failed with exit code $LASTEXITCODE" }
 
 $Size = [math]::Round((Get-Item $Zip).Length / 1MB, 1)
 Write-Host ""

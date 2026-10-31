@@ -261,7 +261,7 @@ jarvis/
 ├─ assets/                 app / tray icon
 ├─ docs/                   HUD screenshot used by this README
 ├─ packaging/              Windows version metadata
-├─ scripts/                icon generation
+├─ scripts/                icon and archive helpers
 ├─ models/                 openWakeWord + Whisper (git-ignored)
 ├─ data/                   source-mode database, cache, logs (git-ignored)
 ├─ runtime/                isolated Python 3.12.10 (git-ignored)
