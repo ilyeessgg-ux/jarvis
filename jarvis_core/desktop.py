@@ -166,7 +166,9 @@ class DesktopUIController:
                 self._browser_opened = True
                 webbrowser.open(self.url)
             return
-        if not self._ready.wait(6.0):
+        if not self._ready.is_set():
+            # The GUI loop has not started yet; reveal the window as soon as it
+            # is ready instead of blocking the caller (often a wake event).
             self._show_when_ready = True
             return
         try:

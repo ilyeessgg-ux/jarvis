@@ -149,7 +149,9 @@ class TrayIcon:
             self._icon.stop()
         except Exception:
             pass
-        if self._thread:
+        # stop() is often called from pystray's own menu thread; joining the
+        # current thread would raise and abort the app shutdown.
+        if self._thread and self._thread is not threading.current_thread():
             self._thread.join(timeout=2.0)
 
     def notify(self, message: str, title: str = "J.A.R.V.I.S.") -> None:
