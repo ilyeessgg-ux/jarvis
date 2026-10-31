@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#02060a">
+  <title>J.A.R.V.I.S. — Personal Intelligence</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-state="boot">
+  <canvas id="starfield" aria-hidden="true"></canvas>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <!-- ───────────────────────────── BOOT ───────────────────────────── -->
+  <div id="boot" class="boot">
+    <div class="boot-inner">
+      <div class="boot-mark">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <defs>
+            <linearGradient id="bootGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#8ef3ff"/><stop offset="1" stop-color="#2aa9c7"/>
+            </linearGradient>
+          </defs>
+          <polygon points="60,8 105,33 105,87 60,112 15,87 15,33" fill="none" stroke="url(#bootGrad)" stroke-width="1.6"/>
+          <polygon points="60,24 91,41 91,79 60,96 29,79 29,41" fill="none" stroke="url(#bootGrad)" stroke-width="1" opacity=".55"/>
+          <circle cx="60" cy="60" r="20" fill="none" stroke="#ffc76b" stroke-width="1.4" stroke-dasharray="5 4"/>
+          <circle cx="60" cy="60" r="8" fill="#8ef3ff" opacity=".9"/>
+        </svg>
+      </div>
+      <h1>J.A.R.V.I.S.</h1>
+      <p class="boot-sub">JUST A RATHER VERY INTELLIGENT SYSTEM</p>
+      <div class="boot-progress"><div id="boot-bar"></div></div>
+      <div id="boot-log" class="boot-log" aria-live="polite"></div>
+      <div class="boot-skip">CLICK ANYWHERE TO SKIP</div>
+    </div>
+  </div>
+
+  <!-- ───────────────────────────── HUD ───────────────────────────── -->
+  <div class="hud" id="hud">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+          <polygon points="32,4 57,18 57,46 32,60 7,46 7,18" fill="none" stroke="currentColor" stroke-width="1.3"/>
+          <polygon points="32,14 48,23 48,41 32,50 16,41 16,23" fill="none" stroke="currentColor" stroke-width=".8" opacity=".55"/>
+          <circle cx="32" cy="32" r="8" fill="none" stroke="#ffc76b" stroke-width="1.2" stroke-dasharray="3 2"/>
+          <circle cx="32" cy="32" r="3" fill="currentColor"/>
+        </svg>
+        <div class="brand-text">
+          <div class="brand-title">J.A.R.V.I.S.<span class="brand-version">v1.0</span></div>
+          <div class="brand-sub">STARK OS · PERSONAL INTELLIGENCE</div>
+        </div>
+      </div>
+
+      <div class="top-center">
+        <div class="status-pill" id="pill-system">
+          <span class="status-dot"></span><span>SYSTEM</span><b id="sys-state">ONLINE</b>
+        </div>
+        <div class="status-pill" id="pill-llm">
+          <span class="status-dot"></span><span>NEURAL</span><b id="llm-state">READY</b>
+        </div>
+        <div class="status-pill" id="pill-mic">
+          <span class="status-dot"></span><span>VOICE</span><b id="mic-state">ARMED</b>
+        </div>
+      </div>
+
+      <div class="top-right">
+        <div class="weather-chip" id="weather-chip" title="Local conditions">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.1 9.2 4.5 4.5 0 0 0 7 18Z"/></svg>
+          <div><b id="weather-temp">--°</b><span id="weather-city">LONDON</span></div>
+        </div>
+        <div class="clock">
+          <div class="clock-time" id="clock-time">--:--:--</div>
+          <div class="clock-date" id="clock-date">—</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- ───────────── LEFT COLUMN ───────────── -->
+      <aside class="col-left">
+        <section class="panel telemetry-panel">
+          <div class="panel-title"><span>SYSTEM TELEMETRY</span><span class="panel-code">SYS-01</span></div>
+          <div class="gauge" data-gauge="cpu">
+            <div class="gauge-head"><span>PROCESSOR</span><b id="cpu-val">0%</b></div>
+            <div class="gauge-track"><div class="gauge-fill" id="cpu-bar"></div></div>
+          </div>
+          <div class="gauge" data-gauge="memory">
+            <div class="gauge-head"><span>MEMORY</span><b id="mem-val">0%</b></div>
+            <div class="gauge-track"><div class="gauge-fill" id="mem-bar"></div></div>
+            <div class="gauge-sub" id="mem-sub">— / — GB</div>
+          </div>
+          <div class="gauge" data-gauge="disk">
+            <div class="gauge-head"><span>STORAGE</span><b id="disk-val">0%</b></div>
+            <div class="gauge-track"><div class="gauge-fill" id="disk-bar"></div></div>
+            <div class="gauge-sub" id="disk-sub">— GB FREE</div>
+          </div>
+          <div class="telemetry-grid">
+            <div><label>NET DOWN</label><b id="net-down">0.0</b><span>KB/S</span></div>
+            <div><label>NET UP</label><b id="net-up">0.0</b><span>KB/S</span></div>
+            <div><label>UPTIME</label><b id="uptime">—</b><span>HRS</span></div>
+            <div><label>PROCESSES</label><b id="processes">—</b><span>ACTIVE</span></div>
+          </div>
+          <div class="battery-line"><span id="battery-label">POWER</span><div class="battery-track"><div id="battery-bar"></div></div><b id="battery-val">—</b></div>
+        </section>
+
+        <section class="panel protocols-panel">
+          <div class="panel-title"><span>ACTIVE PROTOCOLS</span><span class="panel-code">REM-02</span></div>
+          <div id="reminders" class="reminder-list">
+            <div class="empty-line">NO ACTIVE REMINDERS</div>
+          </div>
+          <button class="panel-action" id="add-reminder-btn">+ SCHEDULE REMINDER</button>
+        </section>
+
+        <section class="panel memory-panel">
+          <div class="panel-title"><span>MEMORY CORE</span><span class="panel-code">MEM-03</span></div>
+          <div class="memory-stats">
+            <div><b id="stat-messages">0</b><span>DIALOGUES</span></div>
+            <div><b id="stat-facts">0</b><span>FACTS</span></div>
+            <div><b id="stat-notes">0</b><span>NOTES</span></div>
+            <div><b id="stat-reminders">0</b><span>TASKS</span></div>
+          </div>
+          <div class="memory-line"><span>STORAGE</span><b>LOCAL · SQLITE</b></div>
+        </section>
+      </aside>
+
+      <!-- ───────────── CENTER STAGE ───────────── -->
+      <section class="col-center">
+        <div class="stage">
+          <div class="stage-corners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+          <div class="reactor" id="reactor">
+            <svg viewBox="0 0 420 420" aria-hidden="true">
+              <defs>
+                <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#eaffff" stop-opacity=".98"/>
+                  <stop offset="28%" stop-color="#8ef3ff" stop-opacity=".85"/>
+                  <stop offset="62%" stop-color="#1c9cbb" stop-opacity=".35"/>
+                  <stop offset="100%" stop-color="#0a3340" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#8ef3ff" stop-opacity=".9"/>
+                  <stop offset=".55" stop-color="#2bafcb" stop-opacity=".35"/>
+                  <stop offset="1" stop-color="#ffc76b" stop-opacity=".55"/>
+                </linearGradient>
+                <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="4" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+
+              <circle cx="210" cy="210" r="204" class="ring ring-outer"/>
+              <circle cx="210" cy="210" r="194" class="ring ring-dash"/>
+              <g class="spin-slow">
+                <circle cx="210" cy="210" r="180" class="ring ring-grad"/>
+                <circle cx="210" cy="210" r="180" class="ring ring-gaps"/>
+              </g>
+              <g class="spin-reverse">
+                <circle cx="210" cy="210" r="158" class="ring ring-thin"/>
+                <circle cx="210" cy="210" r="158" class="ring ring-gold-gaps"/>
+              </g>
+              <g class="spin-slow">
+                <polygon points="210,70 331,140 331,280 210,350 89,280 89,140" class="hex-ring"/>
+                <polygon points="210,86 317,148 317,272 210,334 103,272 103,148" class="hex-ring hex-inner"/>
+              </g>
+              <g class="spin-reverse">
+                <circle cx="210" cy="210" r="122" class="ring ring-thin"/>
+                <circle cx="210" cy="210" r="122" class="ring ring-dots"/>
+              </g>
+              <circle cx="210" cy="210" r="100" class="ring ring-faint"/>
+              <circle cx="210" cy="210" r="78" class="ring ring-gold"/>
+              <circle cx="210" cy="210" r="62" fill="url(#coreGlow)" class="core-glow" filter="url(#softGlow)"/>
+              <circle cx="210" cy="210" r="44" class="core-ring"/>
+              <circle cx="210" cy="210" r="28" class="core-ring core-ring-2"/>
+              <circle cx="210" cy="210" r="7" class="core-point"/>
+
+              <g class="orbit orbit-a"><circle cx="210" cy="30" r="3.6"/></g>
+              <g class="orbit orbit-b"><circle cx="390" cy="210" r="2.8"/></g>
+              <g class="orbit orbit-c"><circle cx="210" cy="390" r="2.2"/></g>
+
+              <g class="ticks" id="ticks"></g>
+            </svg>
+            <div class="reactor-caption">
+              <span id="reactor-mode">STANDBY</span>
+              <small>ARC REACTOR · CORE OUTPUT</small>
+            </div>
+          </div>
+
+          <canvas id="wave" class="wave" aria-hidden="true"></canvas>
+
+          <div class="state-block">
+            <div class="state-eyebrow"><span class="eyebrow-line"></span>J.A.R.V.I.S.<span class="eyebrow-line"></span></div>
+            <h2 id="state-label">STANDING BY</h2>
+            <p id="state-detail">Say “Hey Jarvis” or type a command below.</p>
+          </div>
+
+          <div class="quick-actions" id="quick-actions"></div>
+        </div>
+      </section>
+
+      <!-- ───────────── RIGHT COLUMN ───────────── -->
+      <aside class="col-right panel log-panel">
+        <div class="panel-title">
+          <span>COMMUNICATION LOG</span>
+          <div class="log-actions">
+            <button id="export-btn" class="mini-btn" title="Export memory">
+              <svg viewBox="0 0 24 24"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+            </button>
+            <button id="clear-btn" class="mini-btn text" title="Clear conversation">CLEAR</button>
+          </div>
+        </div>
+
+        <div class="transcript" id="transcript">
+          <div class="log-empty" id="log-empty">
+            <svg viewBox="0 0 64 64" aria-hidden="true">
+              <circle cx="32" cy="32" r="22" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 5"/>
+              <circle cx="32" cy="32" r="4" fill="currentColor"/>
+              <path d="M32 10v6M32 48v6M10 32h6M48 32h6" stroke="currentColor" stroke-width="1"/>
+            </svg>
+            <b>AWAITING INPUT</b>
+            <span>Voice link armed. Say “Hey Jarvis”<br>or enter a command below.</span>
+          </div>
+        </div>
+
+        <div class="composer">
+          <button id="ptt-btn" class="icon-btn ptt" title="Push to talk (Ctrl+Alt+J)" aria-label="Push to talk">
+            <svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M8 21h8"/></svg>
+          </button>
+          <input id="command-input" type="text" placeholder="Type a command, sir…" autocomplete="off" spellcheck="false" aria-label="Command">
+          <button id="send-btn" class="icon-btn send" title="Send" aria-label="Send">
+            <svg viewBox="0 0 24 24"><path d="m4 12 16-7-4.5 15-3.5-6-8-2Z"/><path d="m12 14 8-9"/></svg>
+          </button>
+        </div>
+        <div class="composer-hint"><span id="hint-text">VOICE LINK ARMED</span><span class="kbd-hint">ENTER TO SEND</span></div>
+      </aside>
+    </main>
+
+    <footer class="bottombar">
+      <div class="footer-left">
+        <div class="wake-control">
+          <button id="wake-toggle" class="switch" role="switch" aria-checked="true" aria-label="Wake word listening"><span></span></button>
+          <div><b>WAKE WORD</b><small>“Hey Jarvis”</small></div>
+        </div>
+        <div class="footer-divider"></div>
+        <button id="voice-toggle" class="footer-btn" title="Toggle spoken responses">
+          <svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10H4Z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/></svg>
+          <span>VOICE ON</span>
+        </button>
+        <button id="stop-btn" class="footer-btn stop hidden" title="Stop speaking">
+          <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/></svg>
+          <span>STOP</span>
+        </button>
+      </div>
+      <div class="footer-center"><span class="footer-status" id="footer-status"><i></i> ALL SYSTEMS NOMINAL</span></div>
+      <div class="footer-right">
+        <span class="latency" id="latency">LATENCY —</span>
+        <button id="settings-btn" class="footer-btn" title="Open settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6 1.7 1.7 0 0 0 .4-1.1V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15.4 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.1.37.32.7.6 1 .3.28.69.42 1.1.4H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51.6Z"/></svg>
+          <span>SETTINGS</span>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ───────────────────────────── SETTINGS ───────────────────────────── -->
+  <div class="modal-backdrop" id="settings-modal" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="modal-head">
+        <div><span class="panel-code">CONFIG-00</span><h2 id="settings-title">SYSTEM CONFIGURATION</h2></div>
+        <button id="settings-close" class="icon-btn" aria-label="Close settings">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="field-row">
+          <label class="field"><span>DESIGNATION</span><input id="set-user" type="text" placeholder="sir"></label>
+          <label class="field"><span>LOCATION</span><input id="set-city" type="text" placeholder="London"></label>
+        </div>
+        <label class="field">
+          <span>NEURAL MODEL <b class="field-note">OPENROUTER</b></span>
+          <input id="set-model" type="text" placeholder="openai/gpt-4o-mini">
+          <small>Any OpenRouter model with tool support. The free default works without credits; use openai/gpt-4o-mini if you have a funded key.</small>
+        </label>
+        <label class="field">
+          <span>VOICE SYNTHESIS</span>
+          <select id="set-voice"></select>
+        </label>
+        <label class="field">
+          <span>WAKE SENSITIVITY <b id="threshold-val" class="field-note">0.55</b></span>
+          <input id="set-threshold" type="range" min="0.30" max="0.90" step="0.05" value="0.55">
+          <small>Lower is more sensitive. Raise it if Jarvis wakes unprompted.</small>
+        </label>
+
+        <div class="toggle-row">
+          <div><b>WAKE WORD LISTENING</b><small>Continuously listen for “Hey Jarvis”</small></div>
+          <button id="set-wake" class="switch" role="switch"><span></span></button>
+        </div>
+        <div class="toggle-row">
+          <div><b>SPOKEN RESPONSES</b><small>Read every answer aloud in the JARVIS voice</small></div>
+          <button id="set-speak" class="switch" role="switch"><span></span></button>
+        </div>
+
+        <div class="modal-note">
+          <b>SECURITY</b> The OpenRouter key lives only in <code id="config-path">jarvis/.env</code> and is never sent to the browser.
+          Conversation memory is stored locally in <code id="data-path">data/jarvis.db</code>.
+        </div>
+        <div class="modal-stats" id="modal-stats"></div>
+      </div>
+      <div class="modal-foot">
+        <div class="modal-foot-left">
+          <button id="open-data" class="ghost-btn">OPEN DATA FOLDER</button>
+          <a href="/api/export" class="ghost-btn">EXPORT MEMORY</a>
+        </div>
+        <button id="settings-save" class="primary-btn">SAVE CONFIGURATION</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <div id="lightbox" class="lightbox" hidden>
+    <button id="lightbox-close" aria-label="Close">×</button>
+    <img id="lightbox-img" alt="Screenshot preview">
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
