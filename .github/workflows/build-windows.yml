@@ -46,11 +46,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $tag = "${{ github.ref_name }}"
+          $asset = (Get-ChildItem dist\JARVIS-*.zip | Select-Object -First 1).FullName
           gh release view $tag *> $null
           if ($LASTEXITCODE -eq 0) {
-            gh release upload $tag dist/JARVIS-*.zip --clobber
+            gh release upload $tag $asset --clobber
           } else {
-            gh release create $tag dist/JARVIS-*.zip `
+            gh release create $tag $asset `
               --title "J.A.R.V.I.S. $tag" `
               --generate-notes
           }
